@@ -6,6 +6,7 @@ import random
 import argparse
 import os
 import warnings
+import pandas as pd
 warnings.filterwarnings("ignore")
 from utils import process
 from utils import aug
@@ -169,7 +170,7 @@ if __name__ == '__main__':
     opt = torch.optim.Adam(merit.parameters(), lr=lr, weight_decay=weight_decay)
 
     results = []
-
+    loss_results=[]
     # Training
     best = 0
     patience_count = 0
@@ -216,10 +217,14 @@ if __name__ == '__main__':
             else:
                 patience_count += 1
             results.append(acc)
+            loss_results.append(loss.item())
             print('\t epoch {:03d} | loss {:.5f} | clf test acc {:.5f}'.format(epoch, loss.item(), acc))
             if patience_count >= patience:
                 print('Early Stopping.')
                 break
+    training_data = {'loss results':loss_results,'test acc':results} # 两组列元素，并且个数需要相同
+    finaldata = pd.DataFrame(training_data) # 这里默认的 index 就是 range(n)，n 是列表的长度
+    finaldata.to_csv("./finalresults.csv",index=False,sep=',')
     save_embeds(eval_adj, eval_diff, features, model, idx_train, idx_test, sparse) ##自己加的
     result_over_runs.append(max(results))
     print('\t best acc {:.5f}'.format(max(results)))
